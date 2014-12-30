@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/snormore/gopusher"
+	"github.com/nvsoft/pusher.go"
 	"log"
 	"net/http"
 	"time"
