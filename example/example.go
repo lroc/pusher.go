@@ -26,7 +26,8 @@ func main() {
 
 	// Create the "static"-channel explictly, since AllowChannelCreation is false
 	// in the DefaultConfiguration.
-	channel, _ := push.Channel("static")
+	var channel *pusher.Channel
+	channel, _ = push.Channel("static")
 
 	go func() {
 		i := 0

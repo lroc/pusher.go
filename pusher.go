@@ -18,7 +18,7 @@ import (
 // to ServeMux.Handle.
 type pusher struct {
 	acceptor          Acceptor
-	channels          map[string]*channel
+	channels          map[string]*Channel
 	config            Configuration
 	lock              sync.RWMutex // Protects channels.
 	PublisherHandler  http.Handler // The handler for publisher locations.
@@ -31,7 +31,7 @@ type pusher struct {
 func New(acceptor Acceptor, config Configuration) (p *pusher) {
 	p = &pusher{
 		acceptor: acceptor,
-		channels: make(map[string]*channel),
+		channels: make(map[string]*Channel),
 		config:   config,
 	}
 
@@ -55,7 +55,7 @@ func New(acceptor Acceptor, config Configuration) (p *pusher) {
 
 // Channel returns the channel identified with the given channel id. If the channel
 // does not yet exists, it will be created.
-func (p *pusher) Channel(cid string) (c *channel, created bool) {
+func (p *pusher) Channel(cid string) (c *Channel, created bool) {
 	p.lock.Lock()
 	c, ok := p.channels[cid]
 	if !ok {
@@ -76,7 +76,7 @@ func (p *pusher) Channel(cid string) (c *channel, created bool) {
 // of channels. We could do better.
 func (p *pusher) GC() int {
 	var i int
-	var c *channel
+	var c *Channel
 
 	start := time.Now().Unix()
 	limit := (start - p.config.MaxChannelIdleTime) / 1e9
@@ -137,7 +137,7 @@ func (p *pusher) handlePublisher(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	status := http.StatusMethodNotAllowed
-	var c *channel
+	var c *Channel
 	var ok bool
 
 	switch req.Method {

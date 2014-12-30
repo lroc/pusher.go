@@ -22,7 +22,7 @@ type Stats struct {
 
 // ChannelSlice provides sort.Interface to sort by channel activities in ascending order
 // i.e. where least active channel is first.
-type channelSlice []*channel
+type channelSlice []*Channel
 
 func (cs channelSlice) Len() int {
 	return len(cs)
@@ -38,7 +38,7 @@ func (cs channelSlice) Swap(i, j int) {
 
 // Channel represents a gateway for messages to pass from publishers to
 // subscribers.
-type channel struct {
+type Channel struct {
 	subscribers *list.List     // The active subscribers to this channel.
 	config      *Configuration // The configuration options.
 	lock        sync.RWMutex   // Protects the state.
@@ -49,8 +49,8 @@ type channel struct {
 }
 
 // NewChannel creates a new channel.
-func newChannel(id string, config *Configuration) (c *channel) {
-	c = &channel{
+func newChannel(id string, config *Configuration) (c *Channel) {
+	c = &Channel{
 		subscribers: list.New(),
 		config:      config,
 		stats:       Stats{Created: time.Now().Unix()},
@@ -61,7 +61,7 @@ func newChannel(id string, config *Configuration) (c *channel) {
 }
 
 // Stamp return the time of the last activity on this channel.
-func (c *channel) stamp() int64 {
+func (c *Channel) stamp() int64 {
 	if c.stats.LastRequested == 0 && c.stats.LastPublished == 0 {
 		return c.stats.Created
 	} else if c.stats.LastRequested > c.stats.LastPublished {
@@ -72,7 +72,7 @@ func (c *channel) stamp() int64 {
 
 // WriteStats writes statistics about this channel straight to rw. It
 // will determine the encoding of the stats based on the request's Accept-header.
-func (c *channel) writeStats(rw http.ResponseWriter, req *http.Request) error {
+func (c *Channel) writeStats(rw http.ResponseWriter, req *http.Request) error {
 	var typ, subtype string
 
 	// Valid Accept-types are {text | application} / {statFormats...}.
@@ -115,7 +115,7 @@ func (c *channel) writeStats(rw http.ResponseWriter, req *http.Request) error {
 }
 
 // Stats returns a snapshot of the current statistics.
-func (c *channel) Stats() (stats Stats) {
+func (c *Channel) Stats() (stats Stats) {
 	c.lock.RLock()
 	stats = c.stats
 	c.lock.RUnlock()
@@ -124,7 +124,7 @@ func (c *channel) Stats() (stats Stats) {
 
 // Publish takes the given message and sends it to all active subscribers. It
 // can also queue the message for future requests.
-func (c *channel) Publish(m *Message, queue bool) (n int) {
+func (c *Channel) Publish(m *Message, queue bool) (n int) {
 	c.lock.Lock()
 	n = c.publish(m, queue)
 	c.lock.Unlock()
@@ -134,12 +134,12 @@ func (c *channel) Publish(m *Message, queue bool) (n int) {
 // PublishString takes the given string and sends it to all active subscribers along
 // with a text/plain content-type and a 200 status. It can also queue the message for
 // future requests.
-func (c *channel) PublishString(s string, queue bool) int {
+func (c *Channel) PublishString(s string, queue bool) int {
 	m := &Message{Status: http.StatusOK, ContentType: "text/plain", Payload: []byte(s)}
 	return c.Publish(m, queue)
 }
 
-func (c *channel) publish(m *Message, queue bool) (n int) {
+func (c *Channel) publish(m *Message, queue bool) (n int) {
 	m.time = time.Now().Unix()
 	m.etag = 0
 
@@ -177,7 +177,7 @@ func (c *channel) publish(m *Message, queue bool) (n int) {
 }
 
 // Unsubscribe removes the given subscriber from subscribers.
-func (c *channel) Unsubscribe(elem *list.Element) {
+func (c *Channel) Unsubscribe(elem *list.Element) {
 	c.lock.Lock()
 	close(elem.Value.(chan *Message))
 	c.subscribers.Remove(elem)
@@ -192,7 +192,7 @@ func (c *channel) Unsubscribe(elem *list.Element) {
 // immediately but with zero'd return values. Otherwise a list.Element is
 // returned, whose value is a channel of *Message type, that might eventually
 // receive the desired message.
-func (c *channel) Subscribe(since int64, etag int) (*list.Element, *Message) {
+func (c *Channel) Subscribe(since int64, etag int) (*list.Element, *Message) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
