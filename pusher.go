@@ -129,6 +129,7 @@ func (p *pusher) GC() int {
 // Any other request using a method other than those that were described above will be responded with a
 // 405 response.
 func (p *pusher) handlePublisher(rw http.ResponseWriter, req *http.Request) {
+  rw.Header().Add("Access-Control-Allow-Origin", "*")
 	cid := p.acceptor(req)
 	if cid == "" {
 		Logger.Printf("Pub/404: Acceptor denied access to URL %q [%s]", req.URL.String(), req.RemoteAddr)
@@ -147,7 +148,7 @@ func (p *pusher) handlePublisher(rw http.ResponseWriter, req *http.Request) {
 		p.lock.RUnlock()
 
 		if ok {
-			Logger.Printf("Pub/200: Channel information retrieved for %q [%s]", cid, req.RemoteAddr)
+			//Logger.Printf("Pub/200: Channel information retrieved for %q [%s]", cid, req.RemoteAddr)
 			status = http.StatusOK
 		} else {
 			Logger.Printf("Pub/404: Channel information retrieved for %q [%s]", cid, req.RemoteAddr)
@@ -157,9 +158,9 @@ func (p *pusher) handlePublisher(rw http.ResponseWriter, req *http.Request) {
 	case "PUT":
 		c, ok = p.Channel(cid)
 		if ok {
-			Logger.Printf("Pub/200: Channel %q created [%s]", cid, req.RemoteAddr)
+			//Logger.Printf("Pub/200: Channel %q created [%s]", cid, req.RemoteAddr)
 		} else {
-			Logger.Printf("Pub/200: Channel %q was already created [%s]", cid, req.RemoteAddr)
+			//Logger.Printf("Pub/200: Channel %q was already created [%s]", cid, req.RemoteAddr)
 		}
 		status = http.StatusOK
 
@@ -229,6 +230,7 @@ func (p *pusher) handlePublisher(rw http.ResponseWriter, req *http.Request) {
 // documentation for ConcurrencyModeBroadcast, ConcurrencyModeFILO and ConcurrencyModeLIFO for
 // details.
 func (p *pusher) handleSubscriber(rw http.ResponseWriter, req *http.Request) {
+  rw.Header().Add("Access-Control-Allow-Origin", "*")
 	cid := p.acceptor(req)
 	var status int
 	var since int64
